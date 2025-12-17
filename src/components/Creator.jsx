@@ -235,6 +235,11 @@ function Creator({ walletAddress, userProfile }) {
   };
 
   const handleCreatePack = async () => {
+    // Coming soon
+    setIsCreating(true);
+    setTimeout(() => setIsCreating(false), 3000);
+    return;
+
     if (!walletAddress) {
       setError("Please connect your wallet first");
       return;
@@ -635,7 +640,7 @@ x                        disabled={uploadingImage}
                 }
               >
                 {isCreating
-                  ? "Creating..."
+                  ? "Coming Soon 🚀"
                   : uploadingImage
                   ? "Uploading to IPFS..."
                   : ipfsUris.length !== selectedImages.length

@@ -176,6 +176,11 @@ function PackDetailModal({
                 isPurchasing || isMinting ? "purchasing" : ""
               }`}
               onClick={async () => {
+                // Coming soon
+                setIsMinting(true);
+                setTimeout(() => setIsMinting(false), 3000);
+                return;
+
                 if (!walletAddress) {
                   setShowWalletWarning(true);
                   return;
@@ -283,7 +288,7 @@ function PackDetailModal({
               }}
               disabled={isPurchasing || isMinting}
             >
-              {isPurchasing || isMinting ? "Minting..." : `Buy`}
+              {isPurchasing || isMinting ? "Coming Soon 🚀" : `Buy`}
             </button>
 
             {/* Wallet warning container - fixed height to prevent layout shift */}

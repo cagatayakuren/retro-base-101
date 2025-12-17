@@ -2,6 +2,11 @@ import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import PackDetailModal from "./PackDetailModal";
 import Retro1155Abi from "../abis/Retro1155Abi.json";
+import melisAvailable from "../assets/melis_mood_pack/available.jpeg";
+import melisBreak from "../assets/melis_mood_pack/break.jpeg";
+import melisBusy from "../assets/melis_mood_pack/busy.jpeg";
+import melisDeepWork from "../assets/melis_mood_pack/deep_work.jpeg";
+import melisMeeting from "../assets/melis_mood_pack/meeting.jpeg";
 import "./Marketplace.css";
 
 // Contract address
@@ -9,13 +14,6 @@ const RETRO1155_CONTRACT_ADDRESS = "0xa95495b0f2e5969a19126a57e740338210dd6a36";
 
 // Base Mainnet RPC
 const BASE_RPC_URL = "https://base-rpc.publicnode.com";
-
-// Import melis_mood_pack images
-import melisAvailable from "../assets/melis_mood_pack/available.jpeg";
-import melisBreak from "../assets/melis_mood_pack/break.jpeg";
-import melisBusy from "../assets/melis_mood_pack/busy.jpeg";
-import melisDeepWork from "../assets/melis_mood_pack/deep_work.jpeg";
-import melisMeeting from "../assets/melis_mood_pack/meeting.jpeg";
 
 // Mock data for mood packs
 const mockMoodPacks = [
@@ -36,77 +34,6 @@ const mockMoodPacks = [
       wallet: "0x1234...5678",
     },
     description: "5 minimal expressive office characters",
-  },
-  {
-    id: 2,
-    name: "Neon Dreams",
-    price: "0.0015",
-    image:
-      "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400&h=400&fit=crop",
-    creator: {
-      username: "neonartist",
-      avatar: "https://i.pravatar.cc/150?img=2",
-      wallet: "0xabcd...efgh",
-    },
-    description: "Glowing neon aesthetics for your display",
-  },
-  {
-    id: 3,
-    name: "Pixel Paradise Bundle",
-    price: "0.002",
-    images: [
-      "https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=400&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1614732484003-ef9881555dc3?w=400&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1642228971269-68098c76cb87?w=400&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1551269901-5c5e14c25df7?w=400&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=400&h=400&fit=crop",
-    ],
-    creator: {
-      wallet: "0x9876...5432",
-    },
-    description: "Pixel art collection with 5 classic game vibes",
-  },
-  {
-    id: 4,
-    name: "Synthwave Sunset",
-    price: "0.0025",
-    image:
-      "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=400&h=400&fit=crop",
-    creator: {
-      username: "synthwavelover",
-      avatar: "https://i.pravatar.cc/150?img=3",
-      wallet: "0x5555...6666",
-    },
-    description: "Retro futuristic synthwave aesthetics",
-  },
-  {
-    id: 5,
-    name: "Cyber Punk Mega Pack",
-    price: "0.003",
-    images: [
-      "https://images.unsplash.com/photo-1551269901-5c5e14c25df7?w=400&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1607799279861-4dd421887fb3?w=400&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1635322966219-b75ed372eb01?w=400&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?w=400&h=400&fit=crop",
-    ],
-    creator: {
-      username: "cyberpunkfan",
-      avatar: "https://i.pravatar.cc/150?img=4",
-      wallet: "0x7777...8888",
-    },
-    description: "Dark futuristic cyberpunk mood - 5 image collection",
-  },
-  {
-    id: 6,
-    name: "Pastel Dreams",
-    price: "0.0012",
-    image:
-      "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=400&h=400&fit=crop",
-    creator: {
-      wallet: "0x3333...4444",
-    },
-    description: "Soft pastel colors for a calming vibe",
   },
 ];
 
@@ -265,10 +192,19 @@ function Marketplace({ walletAddress, onPurchase }) {
         
         // Sort by tokenId ascending
         contractPacks.sort((a, b) => a.tokenId - b.tokenId);
-        
-        // Merge contract packs with mock data
-        const mergedPacks = [...contractPacks, ...mockMoodPacks];
-        
+
+        // Update mock pack IDs to avoid conflicts with contract packs
+        const maxContractId = contractPacks.length > 0
+          ? Math.max(...contractPacks.map(p => p.id))
+          : 0;
+        const offsetMockPacks = mockMoodPacks.map((pack, index) => ({
+          ...pack,
+          id: maxContractId + 1000 + index, // Start from high number to avoid conflicts
+        }));
+
+        // Merge mock data with contract packs (mock first)
+        const mergedPacks = [...offsetMockPacks, ...contractPacks];
+
         console.log(`Loaded ${contractPacks.length} packs from contract and ${mockMoodPacks.length} mock packs (total: ${mergedPacks.length})`);
 
         setMoodPacks(mergedPacks);
@@ -285,27 +221,9 @@ function Marketplace({ walletAddress, onPurchase }) {
   }, []);
 
   const handlePurchase = async (pack) => {
-    if (!walletAddress) {
-      setErrorPackId(pack.id);
-      setTimeout(() => setErrorPackId(null), 3000);
-      return;
-    }
-
-    setErrorPackId(null);
     setPurchasingId(pack.id);
-
-    try {
-      // TODO: Implement actual purchase logic with contract
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      if (onPurchase) {
-        onPurchase(pack);
-      }
-    } catch (err) {
-      alert(`Failed to purchase: ${err.message}`);
-    } finally {
-      setPurchasingId(null);
-    }
+    // Coming soon - 3 saniye sonra geri dön
+    setTimeout(() => setPurchasingId(null), 3000);
   };
 
   // Filter packs based on search query
@@ -391,7 +309,7 @@ function Marketplace({ walletAddress, onPurchase }) {
                     onClick={() => handlePurchase(pack)}
                     disabled={purchasingId === pack.id}
                   >
-                    {purchasingId === pack.id ? "Purchasing..." : `Buy`}
+                    {purchasingId === pack.id ? "Coming Soon 🚀" : `Buy`}
                   </button>
                 </div>
               </div>

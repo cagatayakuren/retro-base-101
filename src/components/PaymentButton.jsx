@@ -14,6 +14,11 @@ function PaymentButton({ walletAddress, onPaymentSuccess }) {
   const [success, setSuccess] = useState(false)
 
   const handlePayment = async () => {
+    // Coming soon
+    setLoading(true);
+    setTimeout(() => setLoading(false), 3000);
+    return;
+
     if (!walletAddress) {
       setError('Please connect your wallet first')
       return
@@ -144,10 +149,10 @@ function PaymentButton({ walletAddress, onPaymentSuccess }) {
 
       <button
         onClick={handlePayment}
-        disabled={loading || !walletAddress || parseFloat(amount) <= 0}
+        disabled={loading || parseFloat(amount) <= 0}
         className="payment-button"
       >
-        {loading ? 'Processing...' : success ? 'Payment Successful!' : 'Pay to Rank Up'}
+        {loading ? 'Coming Soon 🚀' : success ? 'Payment Successful!' : 'Pay to Rank Up'}
       </button>
 
       {error && <div className="payment-error">{error}</div>}
