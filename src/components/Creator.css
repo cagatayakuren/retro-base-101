@@ -834,3 +834,146 @@
     font-size: 15px;
   }
 }
+
+/* IPFS Toast Notification */
+.ipfs-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast-content {
+  background: linear-gradient(135deg, #0052ff 0%, #0038b3 100%);
+  color: white;
+  padding: 16px 20px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 82, 255, 0.4);
+  min-width: 320px;
+  max-width: 500px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.toast-icon {
+  background: rgba(255, 255, 255, 0.2);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.toast-message {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast-message p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.toast-link {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  text-decoration: underline;
+  word-break: break-all;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.toast-link:hover {
+  color: white;
+}
+
+.toast-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.toast-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@media (max-width: 640px) {
+  .ipfs-toast {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+  }
+
+  .toast-content {
+    min-width: auto;
+    max-width: 100%;
+  }
+}
+
+/* IPFS Upload Status */
+.ipfs-status {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ipfs-status.uploaded {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.ipfs-status.uploading {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  animation: pulse 1.5s ease-in-out infinite;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
