@@ -1,16 +1,80 @@
-import { ThirdwebStorage } from "@thirdweb-dev/storage";
+import * as Client from '@storacha/client';
 
-// Thirdweb Storage instance
-const storage = new ThirdwebStorage({
-  clientId: import.meta.env.VITE_THIRDWEB_CLIENT_ID || undefined, // Optional - daha hızlı upload için
-});
+// Storacha client - lazy initialization
+let storachaClient = null;
 
-// IPFS Gateway URLs
+// Initialize Storacha client
+async function getStorachaClient() {
+  if (storachaClient) return storachaClient;
+
+  try {
+    // Storacha varsayılan store'u kullanıyor (browser localStorage)
+    // Her zaman aynı principal'ı kullanmak için store parametresi olmadan oluşturuyoruz
+    console.log('Initializing Storacha client...');
+    storachaClient = await Client.create();
+
+    // Space oluştur veya mevcut space'i kullan
+    const spaceDID = import.meta.env.VITE_STORACHA_SPACE_DID;
+
+    if (spaceDID) {
+      // Mevcut space'i kullan
+      console.log('Using configured Space DID:', spaceDID);
+      try {
+        await storachaClient.setCurrentSpace(spaceDID);
+
+        // Mevcut space için de provision kontrolü yap
+        try {
+          console.log('Ensuring space is provisioned...');
+          const account = await storachaClient.login('noreply@retro-base.app');
+          await account.provision(spaceDID);
+          console.log('Space provisioned successfully');
+        } catch (provisionError) {
+          // Zaten provision edilmişse hata vermeyebilir
+          console.log('Space already provisioned or provision not needed');
+        }
+      } catch (spaceError) {
+        console.warn('Could not set space, creating new one:', spaceError);
+        const space = await storachaClient.createSpace('retro-base-nft-space');
+
+        // Space'i provision et (yetkilendirme için gerekli)
+        const account = await storachaClient.login('noreply@retro-base.app');
+        await account.provision(space.did());
+        await storachaClient.setCurrentSpace(space.did());
+
+        console.log('Created new Space DID:', space.did());
+        console.log('⚠️ IMPORTANT: Update this in your .env file:');
+        console.log(`VITE_STORACHA_SPACE_DID=${space.did()}`);
+      }
+    } else {
+      // Yeni space oluştur
+      console.log('Creating new Storacha space...');
+      const space = await storachaClient.createSpace('retro-base-nft-space');
+
+      // Space'i provision et (yetkilendirme için gerekli)
+      console.log('Provisioning space with email account...');
+      const account = await storachaClient.login('noreply@retro-base.app');
+      await account.provision(space.did());
+      await storachaClient.setCurrentSpace(space.did());
+
+      console.log('Created and set Space DID:', space.did());
+      console.log('⚠️ IMPORTANT: Add this to your .env file:');
+      console.log(`VITE_STORACHA_SPACE_DID=${space.did()}`);
+    }
+
+    console.log('Storacha client initialized successfully');
+    return storachaClient;
+  } catch (error) {
+    console.error('Failed to initialize Storacha client:', error);
+    throw error;
+  }
+}
+
+// IPFS Gateway URLs (Storacha öncelikli)
 const IPFS_GATEWAYS = [
+  'https://w3s.link/ipfs/', // Storacha/web3.storage gateway
   'https://ipfs.io/ipfs/',
   'https://cloudflare-ipfs.com/ipfs/',
-  'https://dweb.link/ipfs/',
-  'https://w3s.link/ipfs/'
+  'https://dweb.link/ipfs/'
 ];
 
 /**
@@ -107,9 +171,11 @@ export async function uploadImageToIPFS(image, filename = 'image.jpg') {
       throw new Error('Invalid image format. Expected data URL, blob URL, Blob, or File.');
     }
 
-    // Thirdweb Storage ile yükle
-    console.log('Uploading to Thirdweb Storage...');
-    const uri = await storage.upload(file);
+    // Storacha ile yükle
+    console.log('Uploading to Storacha...');
+    const client = await getStorachaClient();
+    const cid = await client.uploadFile(file);
+    const uri = `ipfs://${cid}`;
     console.log('Image uploaded successfully:', uri);
     return uri;
   } catch (error) {
@@ -145,8 +211,14 @@ export async function uploadImagesToIPFS(images) {
 
     const files = await Promise.all(filePromises);
 
-    // Batch upload ile yükle (daha hızlı)
-    const uris = await storage.uploadBatch(files);
+    // Storacha ile her dosyayı yükle
+    const client = await getStorachaClient();
+    const uploadPromises = files.map(async (file) => {
+      const cid = await client.uploadFile(file);
+      return `ipfs://${cid}`;
+    });
+
+    const uris = await Promise.all(uploadPromises);
     console.log('Images uploaded:', uris);
     return uris;
   } catch (error) {
@@ -184,8 +256,14 @@ export async function uploadMetadataToIPFS(metadata) {
       }
     };
 
-    // Metadata'yı IPFS'e yükle
-    const uri = await storage.upload(nftMetadata);
+    // Metadata'yı JSON olarak File'a çevir
+    const jsonBlob = new Blob([JSON.stringify(nftMetadata)], { type: 'application/json' });
+    const jsonFile = new File([jsonBlob], 'metadata.json', { type: 'application/json' });
+
+    // Storacha ile yükle
+    const client = await getStorachaClient();
+    const cid = await client.uploadFile(jsonFile);
+    const uri = `ipfs://${cid}`;
     console.log('Metadata uploaded:', uri);
     return uri;
   } catch (error) {
@@ -262,10 +340,10 @@ export function getIPFSProtocolUrl(cid) {
 }
 
 /**
- * Thirdweb Storage instance'ını döndür (advanced usage için)
+ * Storacha client instance'ını döndür (advanced usage için)
  */
-export function getStorage() {
-  return storage;
+export async function getStorage() {
+  return await getStorachaClient();
 }
 
 export default {

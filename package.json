@@ -10,7 +10,6 @@
     "@farcaster/miniapp-sdk": "^0.2.1",
     "@ipld/car": "^5.4.2",
     "@storacha/client": "^1.8.24",
-    "@thirdweb-dev/storage": "^2.0.15",
     "@ucanto/core": "^10.4.6",
     "@ucanto/principal": "^9.0.3",
     "ethers": "^6.16.0",
